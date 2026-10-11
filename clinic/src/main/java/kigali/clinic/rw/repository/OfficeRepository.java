@@ -15,7 +15,7 @@ public interface OfficeRepository  extends JpaRepository<Office,UUID>{
     
     List<Office> findByName(String name);
 
-    Optional<Office> findByNameAndOfficeNumber(String name, String officeNumber);
+    Optional<Office> findByNameAndOfficeNumber(String name, int officeNumber);
 
     Optional<Office> findByDoctor(Doctor doctor);
 

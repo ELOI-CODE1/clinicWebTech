@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity 
 @Table (name="office")
@@ -26,6 +27,7 @@ public class Office {
     private int officeNumber;
 
     @OneToOne (mappedBy = "office")
+    @JsonIgnore
     private Doctor doctor;
 
     public String getName() {
@@ -46,6 +48,14 @@ public class Office {
 
     public UUID getId() {
         return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
     }
 
     public Doctor getDoctor() {

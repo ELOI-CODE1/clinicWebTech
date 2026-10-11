@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity 
@@ -31,8 +32,20 @@ public class Patient {
     @Column (name="date_of_birth")
     private Date dateOfBirth;
 
+    @Column (name="ss_number")
+    private String ssNumber;
+
     @OneToMany (mappedBy = "patient")
+    @JsonIgnore
     private List<Appointment> appointments = new ArrayList<>();
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
     public String getFirstName() {
         return firstName;
@@ -56,6 +69,14 @@ public class Patient {
 
     public void setDateOfBirth(Date dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getSsNumber() {
+        return ssNumber;
+    }
+
+    public void setSsNumber(String ssNumber) {
+        this.ssNumber = ssNumber;
     }
 
     public List<Appointment> getAppointments() {

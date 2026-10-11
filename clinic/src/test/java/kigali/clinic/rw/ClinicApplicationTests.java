@@ -1,9 +1,10 @@
-package kigali.clinic;
+package kigali.clinic.rw;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import kigali.clinic.rw.ClinicApplication;
 
-@SpringBootTest
+@SpringBootTest(classes = ClinicApplication.class)
 class ClinicApplicationTests {
 
 	@Test

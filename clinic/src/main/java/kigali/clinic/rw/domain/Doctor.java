@@ -11,10 +11,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity 
 @Table (name = "doctor")
@@ -37,11 +40,25 @@ public class Doctor {
     @JoinColumn (name="office_id")
     private Office office;
 
-    @ManyToMany (mappedBy = "doctors")
+    @ManyToMany
+    @JoinTable (
+        name = "doctor_specialization",
+        joinColumns = @JoinColumn (name="doctor_id"),
+        inverseJoinColumns = @JoinColumn (name="specialization_id")
+     )
     private List<Specialization> specializations = new ArrayList<>();
 
     @OneToMany (mappedBy = "doctor")
+    @JsonIgnore
     private List<Appointment> appointments = new ArrayList<>();
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
     public String getFirstName() {
         return firstName;
@@ -67,10 +84,12 @@ public class Doctor {
         this.dateOfBirth = dateOfBirth;
     }
 
+    @JsonIgnore
     public List<Specialization> getSpecializations() {
         return specializations;
     }
 
+    @JsonProperty
     public void setSpecializations(List<Specialization> specializations) {
         this.specializations = specializations;
     }
@@ -83,7 +102,11 @@ public class Doctor {
         this.appointments = appointments;
     }
 
-    
+    public Office getOffice() {
+        return office;
+    }
 
-
+    public void setOffice(Office office) {
+        this.office = office;
+    }
 }
