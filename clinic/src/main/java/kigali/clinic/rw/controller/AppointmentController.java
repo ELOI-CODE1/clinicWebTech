@@ -37,8 +37,20 @@ public class AppointmentController {
 
     @PostMapping(value = "/save", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> saveAppointment(@RequestBody Appointment appointment) {
-        Appointment savedAppointment = appointmentService.saveAppointment(appointment);
-        return new ResponseEntity<>(savedAppointment, HttpStatus.CREATED);
+        String result = appointmentService.saveAppointment(appointment);
+        if (result.equals("Appointment saved successfully")) {
+            return new ResponseEntity<>(result, HttpStatus.CREATED);
+        }
+        if (result.equals("Appointment date cannot be in the past")) {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+        if (result.equals("Doctor is already booked on that date")) {
+            return new ResponseEntity<>(result, HttpStatus.CONFLICT);
+        }
+        if (result.startsWith("Patient not found") || result.startsWith("Doctor not found")) {
+            return new ResponseEntity<>(result, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
     }
 
     @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -75,6 +87,35 @@ public class AppointmentController {
         java.sql.Date sqlDate = java.sql.Date.valueOf(d);
         String message = appointmentService.cancelDay(doctorId, sqlDate);
         return new ResponseEntity<>(message, HttpStatus.OK);
+    }
+
+    @PatchMapping(value = "/{id}/status")
+    public ResponseEntity<String> updateStatus(@PathVariable UUID id, @RequestParam AppointmentStatus status) {
+        String result = appointmentService.updateStatus(id, status);
+        if (result.equals("Appointment status updated successfully")) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        }
+        if (result.equals("The appointment with that id does not exist")) {
+            return new ResponseEntity<>(result, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+    }
+
+    @PatchMapping(value = "/{id}/reschedule")
+    public ResponseEntity<String> reschedule(@PathVariable UUID id, @RequestParam String newDate) {
+        LocalDate day = LocalDate.parse(newDate);
+        java.sql.Date sqlDate = java.sql.Date.valueOf(day);
+        String result = appointmentService.reschedule(id, sqlDate);
+        if (result.equals("Appointment rescheduled successfully")) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        }
+        if (result.equals("The appointment with that id does not exist")) {
+            return new ResponseEntity<>(result, HttpStatus.NOT_FOUND);
+        }
+        if (result.equals("Doctor is already booked on that date")) {
+            return new ResponseEntity<>(result, HttpStatus.CONFLICT);
+        }
+        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
     }
 
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)

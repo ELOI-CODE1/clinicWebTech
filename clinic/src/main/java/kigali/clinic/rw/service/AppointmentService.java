@@ -1,5 +1,6 @@
 package kigali.clinic.rw.service;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -33,32 +34,45 @@ public class AppointmentService {
     @Autowired
     private DoctorRepository doctorRepo;
 
-    public Appointment saveAppointment(Appointment appointment) {
+    public String saveAppointment(Appointment appointment) {
         Patient patient = appointment.getPatient();
         Doctor doctor = appointment.getDoctor();
+        Patient fetchedPatient = null;
+        Doctor fetchedDoctor = null;
         if (patient != null && patient.getId() != null) {
-            Patient fetchedPatient = patientRepo.findById(patient.getId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found with id: " + patient.getId()));
-            appointment.setPatient(fetchedPatient);
+            Optional<Patient> found = patientRepo.findById(patient.getId());
+            if (found.isEmpty()) {
+                return "Patient not found with id: " + patient.getId();
+            }
+            fetchedPatient = found.get();
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Patient is required");
+            return "Patient is required";
         }
         if (doctor != null && doctor.getId() != null) {
-            Doctor fetchedDoctor = doctorRepo.findById(doctor.getId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found with id: " + doctor.getId()));
-            appointment.setDoctor(fetchedDoctor);
+            Optional<Doctor> found = doctorRepo.findById(doctor.getId());
+            if (found.isEmpty()) {
+                return "Doctor not found with id: " + doctor.getId();
+            }
+            fetchedDoctor = found.get();
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor is required");
+            return "Doctor is required";
         }
+        appointment.setPatient(fetchedPatient);
+        appointment.setDoctor(fetchedDoctor);
+        appointment.setStatus(AppointmentStatus.SCHEDULED);
         if (appointment.getAppointmentDate() != null) {
+            if (appointment.getAppointmentDate().toLocalDate().isBefore(LocalDate.now())) {
+                return "Appointment date cannot be in the past";
+            }
             java.sql.Date d = new java.sql.Date(appointment.getAppointmentDate().getTime());
             boolean booked = appointmentRepo.existsByDoctor_IdAndAppointmentDateAndStatusNot(
-                    appointment.getDoctor().getId(), d, AppointmentStatus.CANCELLED);
+                    fetchedDoctor.getId(), d, AppointmentStatus.CANCELLED);
             if (booked) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Doctor is already booked on that date");
+                return "Doctor is already booked on that date";
             }
         }
-        return appointmentRepo.save(appointment);
+        appointmentRepo.save(appointment);
+        return "Appointment saved successfully";
     }
 
     public List<Appointment> getAllAppointments() {
@@ -74,10 +88,63 @@ public class AppointmentService {
         Appointment appointment = getAppointmentById(id);
         appointment.setAppointmentDate(appointmentDetails.getAppointmentDate());
         appointment.setReason(appointmentDetails.getReason());
-        appointment.setStatus(appointmentDetails.getStatus());
         appointment.setPatient(appointmentDetails.getPatient());
         appointment.setDoctor(appointmentDetails.getDoctor());
         return appointmentRepo.save(appointment);
+    }
+
+    public String updateStatus(UUID id, AppointmentStatus status) {
+        Optional<Appointment> found = appointmentRepo.findById(id);
+        if (found.isEmpty()) {
+            return "The appointment with that id does not exist";
+        }
+        Appointment appointment = found.get();
+        AppointmentStatus current = appointment.getStatus();
+        boolean ok = false;
+        if (current == AppointmentStatus.SCHEDULED
+                && (status == AppointmentStatus.CONFIRMED || status == AppointmentStatus.CANCELLED)) {
+            ok = true;
+        }
+        if (current == AppointmentStatus.CONFIRMED
+                && (status == AppointmentStatus.COMPLETED || status == AppointmentStatus.CANCELLED)) {
+            ok = true;
+        }
+        if (!ok) {
+            return "Cannot change status from " + current + " to " + status;
+        }
+        appointment.setStatus(status);
+        appointmentRepo.save(appointment);
+        return "Appointment status updated successfully";
+    }
+
+    public String reschedule(UUID id, java.sql.Date newDate) {
+        Optional<Appointment> found = appointmentRepo.findById(id);
+        if (found.isEmpty()) {
+            return "The appointment with that id does not exist";
+        }
+        Appointment appointment = found.get();
+        if (appointment.getStatus() == AppointmentStatus.COMPLETED) {
+            return "A COMPLETED appointment cannot be rescheduled";
+        }
+        if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
+            return "A CANCELLED appointment cannot be rescheduled";
+        }
+        if (newDate.toLocalDate().isBefore(LocalDate.now())) {
+            return "Appointment date cannot be in the past";
+        }
+        java.sql.Date current = appointment.getAppointmentDate();
+        boolean sameDay = current != null && current.toLocalDate().equals(newDate.toLocalDate());
+        if (!sameDay && appointment.getDoctor() != null) {
+            boolean booked = appointmentRepo.existsByDoctor_IdAndAppointmentDateAndStatusNot(
+                    appointment.getDoctor().getId(), newDate, AppointmentStatus.CANCELLED);
+            if (booked) {
+                return "Doctor is already booked on that date";
+            }
+        }
+        appointment.setAppointmentDate(newDate);
+        appointment.setStatus(AppointmentStatus.SCHEDULED);
+        appointmentRepo.save(appointment);
+        return "Appointment rescheduled successfully";
     }
 
     public void deleteAppointment(UUID id) {
