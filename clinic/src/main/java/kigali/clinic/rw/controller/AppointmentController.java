@@ -166,7 +166,10 @@ public class AppointmentController {
 
     @DeleteMapping(value = "/delete/{id}")
     public ResponseEntity<String> deleteAppointment(@PathVariable UUID id) {
-        appointmentService.deleteAppointment(id);
-        return new ResponseEntity<>("Appointment deleted successfully", HttpStatus.OK);
+        String result = appointmentService.deleteAppointment(id);
+        if (result.equals("Appointment deleted successfully")) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(result, HttpStatus.CONFLICT);
     }
 }

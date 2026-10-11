@@ -21,6 +21,7 @@ import kigali.clinic.rw.domain.Patient;
 import kigali.clinic.rw.repository.AppointmentRepository;
 import kigali.clinic.rw.repository.DoctorRepository;
 import kigali.clinic.rw.repository.PatientRepository;
+import kigali.clinic.rw.repository.PrescriptionRepository;
 
 @Service
 public class AppointmentService {
@@ -33,6 +34,9 @@ public class AppointmentService {
 
     @Autowired
     private DoctorRepository doctorRepo;
+
+    @Autowired
+    private PrescriptionRepository prescriptionRepo;
 
     public String saveAppointment(Appointment appointment) {
         Patient patient = appointment.getPatient();
@@ -147,9 +151,13 @@ public class AppointmentService {
         return "Appointment rescheduled successfully";
     }
 
-    public void deleteAppointment(UUID id) {
+    public String deleteAppointment(UUID id) {
         Appointment appointment = getAppointmentById(id);
+        if (prescriptionRepo.existsByAppointment_Id(id)) {
+            return "That appointment has prescriptions, delete them first";
+        }
         appointmentRepo.delete(appointment);
+        return "Appointment deleted successfully";
     }
 
     public List<Appointment> getAppointmentsByDate(Date date) {
