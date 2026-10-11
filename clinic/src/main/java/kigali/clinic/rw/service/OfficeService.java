@@ -46,6 +46,10 @@ public class OfficeService {
       return officeRepo.findAll();
    }
 
+   public List<Office> getFreeOffices(){
+      return officeRepo.findFreeOffices();
+   }
+
    public Object getBusiestOffice(){
       List<Object[]> rows = appointmentRepo.findBusiestOffice();
       if(rows.isEmpty()){

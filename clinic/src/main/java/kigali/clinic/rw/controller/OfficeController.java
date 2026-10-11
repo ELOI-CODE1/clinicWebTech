@@ -43,6 +43,12 @@ public class OfficeController {
       return new ResponseEntity<>(offices, HttpStatus.OK);
     }
 
+    @GetMapping (value = "/free", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Office>> getFreeOffices(){
+      List<Office> offices = officeService.getFreeOffices();
+      return new ResponseEntity<>(offices, HttpStatus.OK);
+    }
+
     @GetMapping (value = "/busiest", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getBusiest(){
       Object result = officeService.getBusiestOffice();

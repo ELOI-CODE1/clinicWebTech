@@ -35,5 +35,13 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
         ORDER BY doc.lastName ASC
         """)
     List<Doctor> findDoctorsWithoutOffice();
+
+    @Query("""
+        SELECT doc FROM Doctor doc
+        WHERE LOWER(doc.firstName) LIKE LOWER(CONCAT('%', :name, '%'))
+        OR LOWER(doc.lastName) LIKE LOWER(CONCAT('%', :name, '%'))
+        ORDER BY doc.lastName ASC
+        """)
+    List<Doctor> searchByName(@Param("name") String name);
     
 }

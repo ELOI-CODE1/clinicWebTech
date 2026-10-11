@@ -22,6 +22,8 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     boolean existsByFirstNameAndLastName(String firstName, String lastName);
 
+    Optional<Patient> findBySsNumber(String ssNumber);
+
     List<Patient> findByLastNameIgnoreCaseOrderByFirstNameAsc(String lastName);
 
     @Query("""

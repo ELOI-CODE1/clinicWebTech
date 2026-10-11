@@ -152,4 +152,8 @@ public class DoctorService {
     public List<Doctor> getDoctorsWithoutOffice() {
         return doctorRepo.findDoctorsWithoutOffice();
     }
+
+    public List<Doctor> searchDoctorsByName(String name) {
+        return doctorRepo.searchByName(name);
+    }
 }

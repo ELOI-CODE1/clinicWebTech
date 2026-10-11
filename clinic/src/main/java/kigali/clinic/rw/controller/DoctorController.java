@@ -1,6 +1,8 @@
 package kigali.clinic.rw.controller;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import kigali.clinic.rw.domain.Appointment;
 import kigali.clinic.rw.domain.Doctor;
+import kigali.clinic.rw.service.AppointmentService;
 import kigali.clinic.rw.service.DoctorService;
 
 @RestController
@@ -26,6 +30,9 @@ public class DoctorController {
 
     @Autowired
     private DoctorService doctorService;
+
+    @Autowired
+    private AppointmentService appointmentService;
 
     @PostMapping(value = "/save", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> saveDoctor(@RequestBody Doctor doctor) {
@@ -61,9 +68,20 @@ public class DoctorController {
     }
 
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Doctor>> searchDoctors(@RequestParam String firstName) {
-        List<Doctor> doctors = doctorService.getDoctorsByFirstName(firstName);
+    public ResponseEntity<List<Doctor>> searchDoctors(@RequestParam String name) {
+        List<Doctor> doctors = doctorService.searchDoctorsByName(name);
         return new ResponseEntity<>(doctors, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/{doctorId}/agenda", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getAgenda(@PathVariable UUID doctorId, @RequestParam String date) {
+        LocalDate day = LocalDate.parse(date);
+        java.sql.Date sqlDate = java.sql.Date.valueOf(day);
+        Optional<List<Appointment>> rows = appointmentService.getAgenda(doctorId, sqlDate);
+        if (rows.isEmpty()) {
+            return new ResponseEntity<>("The doctor with that id does not exist", HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(rows.get(), HttpStatus.OK);
     }
 
     @PutMapping(value = "/update/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

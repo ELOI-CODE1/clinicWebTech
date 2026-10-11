@@ -1,6 +1,7 @@
 package kigali.clinic.rw.controller;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import kigali.clinic.rw.domain.Appointment;
 import kigali.clinic.rw.domain.Patient;
+import kigali.clinic.rw.service.AppointmentService;
 import kigali.clinic.rw.service.PatientService;
 
 @RestController
@@ -26,6 +29,9 @@ public class PatientController {
 
     @Autowired
     private PatientService patientService;
+
+    @Autowired
+    private AppointmentService appointmentService;
 
     @PostMapping(value = "/save", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> savePatient(@RequestBody Patient patient) {
@@ -55,6 +61,15 @@ public class PatientController {
     public ResponseEntity<List<Patient>> getFrequent(@RequestParam int min) {
         List<Patient> patients = patientService.getFrequentPatients(min);
         return new ResponseEntity<>(patients, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/{ssNumber}/upcoming", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getUpcoming(@PathVariable String ssNumber) {
+        Optional<List<Appointment>> rows = appointmentService.getUpcoming(ssNumber);
+        if (rows.isEmpty()) {
+            return new ResponseEntity<>("That patient with that ssnumber does not exist", HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(rows.get(), HttpStatus.OK);
     }
 
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import kigali.clinic.rw.domain.Doctor;
@@ -22,6 +23,16 @@ public interface OfficeRepository  extends JpaRepository<Office,UUID>{
     Optional<Office>  findByOfficeNumber(int officeNumber);
 
     boolean existsByOfficeNumber(int officeNumber);
+
+    @Query("""
+        SELECT off FROM Office off
+        WHERE NOT EXISTS (
+            SELECT doc FROM Doctor doc
+            WHERE doc.office = off
+        )
+        ORDER BY off.officeNumber ASC
+        """)
+    List<Office> findFreeOffices();
 
     // @Query ("""
     //         SELECT FROM Office O WHERE O.doctor.name : = name

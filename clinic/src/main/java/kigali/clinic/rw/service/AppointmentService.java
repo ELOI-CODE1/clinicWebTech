@@ -172,6 +172,31 @@ public class AppointmentService {
         return appointmentRepo.findByStatusOrderByAppointmentDateAsc(status);
     }
 
+    public Optional<List<Appointment>> getAgenda(UUID doctorId, java.sql.Date date) {
+        Optional<Doctor> found = doctorRepo.findById(doctorId);
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        List<Appointment> rows = appointmentRepo.findByDoctor_IdAndAppointmentDateAndStatusNot(
+                doctorId, date, AppointmentStatus.CANCELLED);
+        return Optional.of(rows);
+    }
+
+    public Optional<List<Appointment>> getUpcoming(String ssNumber) {
+        Optional<Patient> found = patientRepo.findBySsNumber(ssNumber);
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        java.sql.Date today = java.sql.Date.valueOf(LocalDate.now());
+        List<AppointmentStatus> wanted = new java.util.ArrayList<>();
+        wanted.add(AppointmentStatus.SCHEDULED);
+        wanted.add(AppointmentStatus.CONFIRMED);
+        List<Appointment> rows = appointmentRepo
+                .findByPatient_SsNumberAndAppointmentDateGreaterThanEqualAndStatusInOrderByAppointmentDateAsc(
+                        ssNumber, today, wanted);
+        return Optional.of(rows);
+    }
+
     public List<Appointment> getAppointmentsBetween(java.sql.Date start, java.sql.Date end) {
         return appointmentRepo.findByAppointmentDateBetweenOrderByAppointmentDateAsc(start, end);
     }

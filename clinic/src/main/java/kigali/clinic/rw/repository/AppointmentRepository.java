@@ -29,6 +29,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     boolean existsByDoctor_IdAndAppointmentDateAndStatusNot(UUID doctorId, java.sql.Date appointmentDate, AppointmentStatus status);
 
+    List<Appointment> findByDoctor_IdAndAppointmentDateAndStatusNot(UUID doctorId, java.sql.Date appointmentDate, AppointmentStatus status);
+
+    List<Appointment> findByPatient_SsNumberAndAppointmentDateGreaterThanEqualAndStatusInOrderByAppointmentDateAsc(
+            String ssNumber, java.sql.Date date, List<AppointmentStatus> statuses);
+
+    long countByAppointmentDate(java.sql.Date date);
+
+    long countByStatus(AppointmentStatus status);
+
     @Query("""
         SELECT ap.status, COUNT(ap) FROM Appointment ap
         GROUP BY ap.status
